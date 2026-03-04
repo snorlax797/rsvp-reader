@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSVP Speed Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            margin-bottom: 100px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 6px;
+            min-height: 18px;
+        }
+
+        .display-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 60px 20px;
+            margin-bottom: 20px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .word-display {
+            font-size: 48px;
+            font-weight: 600;
+            color: #333;
+            letter-spacing: 2px;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: font-size 0.3s;
+        }
+
+        .word-display .letter {
+            display: inline-block;
+        }
+
+        .word-display .letter.focus {
+            color: #e74c3c;
+            font-weight: 700;
+        }
+
+        .kbd-hint {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .kbd-hint kbd {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 11px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .speed-control label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        input[type="range"] {
+            width: 200px;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #5568d3;
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        #positionSlider {
+            width: 300px;
+        }
+
+        #positionSlider:active::-webkit-slider-thumb {
+            background: #e74c3c;
+        }
+
+        #positionSlider:active::-moz-range-thumb {
+            background: #e74c3c;
+        }
+
+        .speed-display {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .toggle-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 8px;
+        }
+
+        .toggle-control label {
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .progress {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            margin-bottom: 40px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .color-picker-section {
+            margin-bottom: 20px;
+        }
+
+        .color-picker-section > label {
+            display: block;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .color-swatches {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .swatch {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .swatch:hover {
+            transform: translateY(-2px);
+        }
+
+        .swatch-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: box-shadow 0.2s;
+            position: relative;
+        }
+
+        .swatch.active .swatch-preview {
+            box-shadow: 0 0 0 3px #667eea, 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .swatch.active .swatch-preview::after {
+            content: '✓';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #667eea;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Display box color schemes */
+        .display-section.dark {
+            background: #1a1a1a;
+        }
+
+        .display-section.dark .word-display {
+            color: #ffffff;
+        }
+
+        .display-section.dark .word-display .letter.focus {
+            color: #ff4444;
+        }
+
+        .display-section.sepia {
+            background: #f4ecd8;
+        }
+
+        .display-section.sepia .word-display {
+            color: #5c4a2a;
+        }
+
+        .display-section.sepia .word-display .letter.focus {
+            color: #d4502a;
+        }
+
+        .display-section.highcontrast {
+            background: #000000;
+        }
+
+        .display-section.highcontrast .word-display {
+            color: #ffffff;
+        }
+
+        .display-section.highcontrast .word-display .letter.focus {
+            color: #ffff00;
+        }
+
+        .display-section.mint {
+            background: #e8f5e9;
+        }
+
+        .display-section.mint .word-display {
+            color: #1b5e20;
+        }
+
+        .display-section.mint .word-display .letter.focus {
+            color: #c62828;
+        }
+
+        .display-section.blue {
+            background: #e3f2fd;
+        }
+
+        .display-section.blue .word-display {
+            color: #0d47a1;
+        }
+
+        .display-section.blue .word-display .letter.focus {
+            color: #d32f2f;
+        }
+
+        /* Page background color schemes */
+        body.page-light {
+            background: #f5f5f5;
+        }
+
+        body.page-dark {
+            background: #1a1a1a;
+        }
+
+        body.page-dark .container {
+            background: #2a2a2a;
+            color: #ffffff;
+        }
+
+        body.page-dark h1,
+        body.page-dark .subtitle {
+            color: #ffffff;
+        }
+
+        body.page-dark .stats {
+            color: #cccccc;
+        }
+
+        body.page-sepia {
+            background: #d4c4a8;
+        }
+
+        body.page-sepia .container {
+            background: #f4ecd8;
+        }
+
+        body.page-sepia h1 {
+            color: #5c4a2a;
+        }
+
+        body.page-sepia .subtitle,
+        body.page-sepia .stats {
+            color: #7a6a4a;
+        }
+
+        body.page-highcontrast {
+            background: #000000;
+        }
+
+        body.page-highcontrast .container {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        body.page-highcontrast h1,
+        body.page-highcontrast .subtitle,
+        body.page-highcontrast .stats {
+            color: #ffffff;
+        }
+
+        body.page-mint {
+            background: #c8e6c9;
+        }
+
+        body.page-mint .container {
+            background: #e8f5e9;
+        }
+
+        body.page-mint h1 {
+            color: #1b5e20;
+        }
+
+        body.page-mint .subtitle,
+        body.page-mint .stats {
+            color: #2e7d32;
+        }
+
+        body.page-blue {
+            background: #bbdefb;
+        }
+
+        body.page-blue .container {
+            background: #e3f2fd;
+        }
+
+        body.page-blue h1 {
+            color: #0d47a1;
+        }
+
+        body.page-blue .subtitle,
+        body.page-blue .stats {
+            color: #1565c0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .word-display {
+                font-size: 32px;
+            }
+
+            input[type="range"] {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RSVP Speed Reader</h1>
+        <p class="subtitle">Rapid Serial Visual Presentation - Read faster by focusing on one word at a time</p>
+
+        <div class="input-section">
+            <textarea id="textInput" placeholder="Paste your text here to begin speed reading...">The quick brown fox jumps over the lazy dog. Speed reading using RSVP helps you read faster by displaying one word at a time in the same location, reducing eye movement and increasing focus.</textarea>
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+
+        <div class="display-section">
+            <div class="word-display" id="wordDisplay">Click Start to begin</div>
+        </div>
+
+        <div class="kbd-hint">
+            <kbd>Space</kbd> play/pause &nbsp; <kbd>&#8592;</kbd> <kbd>&#8594;</kbd> step word by word
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" onclick="startReading()">Start</button>
+            <button id="pauseBtn" onclick="pauseReading()" disabled>Pause</button>
+            <button id="resetBtn" onclick="resetReading()">Reset</button>
+        </div>
+
+        <div class="speed-control">
+            <label for="speedSlider">Speed:</label>
+            <input type="range" id="speedSlider" min="100" max="1000" value="300" step="50">
+            <span class="speed-display" id="speedDisplay">300 WPM</span>
+        </div>
+
+        <div class="speed-control">
+            <label for="positionSlider">Position:</label>
+            <input type="range" id="positionSlider" min="0" max="100" value="0" step="1">
+            <span class="speed-display" id="positionDisplay">Word 1</span>
+        </div>
+
+        <div class="speed-control">
+            <label for="fontSlider">Font Size:</label>
+            <input type="range" id="fontSlider" min="24" max="96" value="48" step="4">
+            <span class="speed-display" id="fontDisplay">48px</span>
+        </div>
+
+        <div class="toggle-control">
+            <label for="punctuationToggle">Pause on Punctuation:</label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="punctuationToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <div class="color-picker-section">
+            <label>Display Box:</label>
+            <div class="color-swatches">
+                <div class="swatch active" data-scheme="light" title="Light">
+                    <div class="swatch-preview" style="background: #f8f9fa; border: 2px solid #ddd;">
+                        <span style="color: #333;">A</span><span style="color: #e74c3c;">a</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="dark" title="Dark Mode">
+                    <div class="swatch-preview" style="background: #1a1a1a;">
+                        <span style="color: #fff;">A</span><span style="color: #ff4444;">a</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="sepia" title="Sepia">
+                    <div class="swatch-preview" style="background: #f4ecd8;">
+                        <span style="color: #5c4a2a;">A</span><span style="color: #d4502a;">a</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="highcontrast" title="High Contrast">
+                    <div class="swatch-preview" style="background: #000;">
+                        <span style="color: #fff;">A</span><span style="color: #ff0;">a</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="mint" title="Mint Green">
+                    <div class="swatch-preview" style="background: #e8f5e9;">
+                        <span style="color: #1b5e20;">A</span><span style="color: #c62828;">a</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="blue" title="Blue Tint">
+                    <div class="swatch-preview" style="background: #e3f2fd;">
+                        <span style="color: #0d47a1;">A</span><span style="color: #d32f2f;">a</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="color-picker-section">
+            <label>Page Background:</label>
+            <div class="color-swatches page-swatches">
+                <div class="swatch active" data-scheme="gradient" title="Gradient">
+                    <div class="swatch-preview" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <span style="color: #fff;">Aa</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="light" title="Light">
+                    <div class="swatch-preview" style="background: #f5f5f5; border: 2px solid #ddd;">
+                        <span style="color: #333;">Aa</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="dark" title="Dark Mode">
+                    <div class="swatch-preview" style="background: #1a1a1a;">
+                        <span style="color: #fff;">Aa</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="sepia" title="Sepia">
+                    <div class="swatch-preview" style="background: #d4c4a8;">
+                        <span style="color: #5c4a2a;">Aa</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="highcontrast" title="High Contrast">
+                    <div class="swatch-preview" style="background: #000;">
+                        <span style="color: #fff;">Aa</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="mint" title="Mint Green">
+                    <div class="swatch-preview" style="background: #c8e6c9;">
+                        <span style="color: #1b5e20;">Aa</span>
+                    </div>
+                </div>
+                <div class="swatch" data-scheme="blue" title="Blue Tint">
+                    <div class="swatch-preview" style="background: #bbdefb;">
+                        <span style="color: #0d47a1;">Aa</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="stats">
+            <span id="wordCount">Words: 0</span>
+            <span id="currentWord">Current: 0</span>
+            <span id="timeRemaining">Time: 0:00</span>
+        </div>
+    </div>
+
+    <script>
+        let words = [];
+        let currentIndex = 0;
+        let interval = null;
+        let wpm = 300;
+        let isManualScrubbing = false;
+        let fontSize = 48;
+        let pauseOnPunctuation = false;
+
+        const textInput = document.getElementById('textInput');
+        const wordDisplay = document.getElementById('wordDisplay');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedDisplay = document.getElementById('speedDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const progressBar = document.getElementById('progressBar');
+        const wordCount = document.getElementById('wordCount');
+        const currentWord = document.getElementById('currentWord');
+        const timeRemaining = document.getElementById('timeRemaining');
+        const positionSlider = document.getElementById('positionSlider');
+        const positionDisplay = document.getElementById('positionDisplay');
+        const displaySection = document.querySelector('.display-section');
+        const displaySwatches = document.querySelectorAll('.color-swatches:not(.page-swatches) .swatch');
+        const pageSwatches = document.querySelectorAll('.page-swatches .swatch');
+        const fontSlider = document.getElementById('fontSlider');
+        const fontDisplay = document.getElementById('fontDisplay');
+        const punctuationToggle = document.getElementById('punctuationToggle');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // --- localStorage persistence ---
+        function saveSettings() {
+            localStorage.setItem('rsvp_wpm', wpm);
+            localStorage.setItem('rsvp_fontSize', fontSize);
+            localStorage.setItem('rsvp_pauseOnPunctuation', pauseOnPunctuation);
+        }
+
+        function loadSettings() {
+            const savedWpm = localStorage.getItem('rsvp_wpm');
+            const savedFontSize = localStorage.getItem('rsvp_fontSize');
+            const savedPause = localStorage.getItem('rsvp_pauseOnPunctuation');
+            const savedDisplayScheme = localStorage.getItem('rsvp_displayScheme');
+            const savedPageScheme = localStorage.getItem('rsvp_pageScheme');
+
+            if (savedWpm) {
+                wpm = parseInt(savedWpm);
+                speedSlider.value = wpm;
+                speedDisplay.textContent = wpm + ' WPM';
+            }
+            if (savedFontSize) {
+                fontSize = parseInt(savedFontSize);
+                fontSlider.value = fontSize;
+                fontDisplay.textContent = fontSize + 'px';
+                wordDisplay.style.fontSize = fontSize + 'px';
+            }
+            if (savedPause !== null) {
+                pauseOnPunctuation = savedPause === 'true';
+                punctuationToggle.checked = pauseOnPunctuation;
+            }
+            if (savedDisplayScheme) {
+                applyDisplayScheme(savedDisplayScheme);
+                displaySwatches.forEach(s => {
+                    s.classList.toggle('active', s.getAttribute('data-scheme') === savedDisplayScheme);
+                });
+            }
+            if (savedPageScheme) {
+                applyPageScheme(savedPageScheme);
+                pageSwatches.forEach(s => {
+                    s.classList.toggle('active', s.getAttribute('data-scheme') === savedPageScheme);
+                });
+            }
+        }
+
+        // --- Event listeners ---
+        speedSlider.addEventListener('input', (e) => {
+            wpm = parseInt(e.target.value);
+            speedDisplay.textContent = wpm + ' WPM';
+            saveSettings();
+            // Reschedule next word with new delay instead of pause+restart
+            if (interval) {
+                clearTimeout(interval);
+                interval = setTimeout(displayNextWord, 60000 / wpm);
+            }
+            updateStats();
+        });
+
+        textInput.addEventListener('input', () => {
+            words = textInput.value.trim().split(/\s+/).filter(w => w.length > 0);
+            positionSlider.max = Math.max(0, words.length - 1);
+            resetReading();
+        });
+
+        fontSlider.addEventListener('input', (e) => {
+            fontSize = parseInt(e.target.value);
+            fontDisplay.textContent = fontSize + 'px';
+            wordDisplay.style.fontSize = fontSize + 'px';
+            saveSettings();
+        });
+
+        punctuationToggle.addEventListener('change', (e) => {
+            pauseOnPunctuation = e.target.checked;
+            saveSettings();
+        });
+
+        positionSlider.addEventListener('mousedown', () => {
+            isManualScrubbing = true;
+            pauseReading();
+        });
+
+        positionSlider.addEventListener('touchstart', () => {
+            isManualScrubbing = true;
+            pauseReading();
+        });
+
+        positionSlider.addEventListener('input', (e) => {
+            if (!words.length) {
+                words = textInput.value.trim().split(/\s+/).filter(w => w.length > 0);
+            }
+            currentIndex = parseInt(e.target.value);
+            if (currentIndex < words.length) {
+                wordDisplay.innerHTML = highlightFocalLetter(words[currentIndex]);
+                positionDisplay.textContent = `Word ${currentIndex + 1}`;
+                updateProgress();
+                updateStats();
+            }
+        });
+
+        positionSlider.addEventListener('mouseup', () => {
+            isManualScrubbing = false;
+        });
+
+        positionSlider.addEventListener('touchend', () => {
+            isManualScrubbing = false;
+        });
+
+        // Keyboard shortcuts: Space = play/pause, arrows = step (when paused)
+        document.addEventListener('keydown', (e) => {
+            if (e.target === textInput) return;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                interval ? pauseReading() : startReading();
+            } else if (e.code === 'ArrowRight' && !interval && words.length) {
+                e.preventDefault();
+                currentIndex = Math.min(currentIndex + 1, words.length - 1);
+                wordDisplay.innerHTML = highlightFocalLetter(words[currentIndex]);
+                positionSlider.value = currentIndex;
+                positionDisplay.textContent = `Word ${currentIndex + 1}`;
+                updateProgress();
+                updateStats();
+            } else if (e.code === 'ArrowLeft' && !interval && words.length) {
+                e.preventDefault();
+                currentIndex = Math.max(currentIndex - 1, 0);
+                wordDisplay.innerHTML = highlightFocalLetter(words[currentIndex]);
+                positionSlider.value = currentIndex;
+                positionDisplay.textContent = `Word ${currentIndex + 1}`;
+                updateProgress();
+                updateStats();
+            }
+        });
+
+        // Display box color scheme
+        function applyDisplayScheme(scheme) {
+            displaySection.classList.remove('dark', 'sepia', 'highcontrast', 'mint', 'blue');
+            if (scheme !== 'light') displaySection.classList.add(scheme);
+        }
+
+        displaySwatches.forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                displaySwatches.forEach(s => s.classList.remove('active'));
+                swatch.classList.add('active');
+                const scheme = swatch.getAttribute('data-scheme');
+                applyDisplayScheme(scheme);
+                localStorage.setItem('rsvp_displayScheme', scheme);
+            });
+        });
+
+        // Page background color scheme
+        function applyPageScheme(scheme) {
+            document.body.classList.remove('page-light', 'page-dark', 'page-sepia', 'page-highcontrast', 'page-mint', 'page-blue');
+            if (scheme !== 'gradient') document.body.classList.add('page-' + scheme);
+        }
+
+        pageSwatches.forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                pageSwatches.forEach(s => s.classList.remove('active'));
+                swatch.classList.add('active');
+                const scheme = swatch.getAttribute('data-scheme');
+                applyPageScheme(scheme);
+                localStorage.setItem('rsvp_pageScheme', scheme);
+            });
+        });
+
+        // Escape HTML special chars to prevent XSS via innerHTML
+        function escapeHtml(char) {
+            return char === '&' ? '&amp;' : char === '<' ? '&lt;' : char === '>' ? '&gt;' : char;
+        }
+
+        function highlightFocalLetter(word) {
+            if (!word) return '';
+
+            const len = word.length;
+            const focalIndex = len === 1 ? 0 : len <= 5 ? 1 : len <= 9 ? 2 : 3;
+
+            let html = '';
+            for (let i = 0; i < len; i++) {
+                const char = escapeHtml(word[i]);
+                html += i === focalIndex
+                    ? `<span class="letter focus">${char}</span>`
+                    : `<span class="letter">${char}</span>`;
+            }
+            return html;
+        }
+
+        function startReading() {
+            errorMsg.textContent = '';
+            if (!words.length) {
+                const text = textInput.value.trim();
+                if (!text) {
+                    errorMsg.textContent = 'Please enter some text first.';
+                    return;
+                }
+                words = text.split(/\s+/).filter(w => w.length > 0);
+                positionSlider.max = words.length - 1;
+            }
+            if (currentIndex >= words.length) {
+                currentIndex = 0;
+                positionSlider.value = 0;
+            }
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            displayNextWord();
+        }
+
+        function displayNextWord() {
+            if (!isManualScrubbing && currentIndex < words.length) {
+                const word = words[currentIndex];
+                wordDisplay.innerHTML = highlightFocalLetter(word);
+                positionSlider.value = currentIndex;
+                positionDisplay.textContent = `Word ${currentIndex + 1}`;
+                updateProgress();
+                updateStats();
+
+                let delay = 60000 / wpm;
+                // Added comma to punctuation set
+                if (pauseOnPunctuation && /[.!?;:,]$/.test(word)) {
+                    delay *= 2;
+                }
+
+                currentIndex++;
+
+                if (currentIndex < words.length) {
+                    interval = setTimeout(displayNextWord, delay);
+                } else {
+                    interval = null;
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    // Don't auto-reset — let user decide what to do next
+                    wordDisplay.textContent = 'Finished! Press Reset to start over.';
+                }
+            }
+        }
+
+        function pauseReading() {
+            clearTimeout(interval);
+            interval = null;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+        }
+
+        function resetReading() {
+            clearTimeout(interval);
+            interval = null;
+            currentIndex = 0;
+            wordDisplay.textContent = 'Click Start to begin';
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            progressBar.style.width = '0%';
+            positionSlider.value = 0;
+            positionDisplay.textContent = words.length > 0 ? 'Word 1' : 'Word 0';
+            updateStats();
+        }
+
+        function updateProgress() {
+            // Progress reflects how far into the text the current word is
+            const progress = words.length > 0 ? ((currentIndex + 1) / words.length) * 100 : 0;
+            progressBar.style.width = progress + '%';
+            positionSlider.max = Math.max(0, words.length - 1);
+        }
+
+        function updateStats() {
+            wordCount.textContent = `Words: ${words.length}`;
+            currentWord.textContent = `Current: ${words.length > 0 ? currentIndex + 1 : 0}`;
+
+            const wordsLeft = words.length - currentIndex;
+            const secondsLeft = (wordsLeft / wpm) * 60;
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = Math.floor(secondsLeft % 60);
+            timeRemaining.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Initialize
+        words = textInput.value.trim().split(/\s+/).filter(w => w.length > 0);
+        positionSlider.max = Math.max(0, words.length - 1);
+        loadSettings();
+        updateStats();
+    </script>
+</body>
+</html>
